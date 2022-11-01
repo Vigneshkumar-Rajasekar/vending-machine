@@ -1,5 +1,10 @@
 package service;
 
+/**
+ * VendingMachineInterface interface has vending machine method definitions
+ *
+ * @author Vigneshkumar
+ */
 public interface VendingMachineInterface {
 
     void setItemCountForSlot(int slotNo, int count) throws IllegalStateException;

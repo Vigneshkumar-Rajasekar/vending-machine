@@ -1,15 +1,27 @@
 package inventory;
 
 import handler.CoinNotSupportedException;
-import handler.VendingMachineException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Coins class handles the coin inventory and its functionality
+ *
+ * @author Vigneshkumar
+ */
 public class Coins {
     private final Map<Double, Integer> coinsCountMap;
 
+    /**
+     * Constructor with list of coins argument to initialize the object
+     * with list of supported coin types
+     */
     public Coins(List<Double> coins) {
-        coinsCountMap = new TreeMap<>(Collections.reverseOrder());
+        coinsCountMap = new ConcurrentHashMap<>();
         for (double coin : coins) {
             coinsCountMap.put(coin, 0);
         }
@@ -28,26 +40,30 @@ public class Coins {
     }
 
     public void addCoinsToMachine(List<Double> inputCoins) {
-        for(double coin : inputCoins){
-            addCoin(coin);
+        if (inputCoins != null) {
+            for (double coin : inputCoins) {
+                addCoin(coin);
+            }
         }
     }
 
     public void removeCoinsFromMachine(List<Double> inputCoins) {
-        for(double coin : inputCoins){
-            removeCoin(coin);
+        if (inputCoins != null) {
+            for (double coin : inputCoins) {
+                removeCoin(coin);
+            }
         }
     }
 
-    public void addCoin(double coinType){
+    public void addCoin(double coinType) {
         if (isCoinTypeAvailable(coinType)) {
-            coinsCountMap.put(coinType, getCoinsCountForCoinType(coinType)+1);
+            coinsCountMap.put(coinType, getCoinsCountForCoinType(coinType) + 1);
         }
     }
 
-    public void removeCoin(double coinType){
+    public void removeCoin(double coinType) {
         if (isCoinTypeAvailable(coinType)) {
-            coinsCountMap.put(coinType, getCoinsCountForCoinType(coinType)-1);
+            coinsCountMap.put(coinType, getCoinsCountForCoinType(coinType) - 1);
         }
     }
 
@@ -65,33 +81,39 @@ public class Coins {
 
     public boolean isCoinsChangeAvailable(double changeAmount) {
         for (Map.Entry<Double, Integer> coinEntry : coinsCountMap.entrySet()) {
-            for(int i = 0; i < coinEntry.getValue(); i++){
-                if(changeAmount > coinEntry.getKey()
-                        && getCoinsCountForCoinType(coinEntry.getKey()) > 0){
+            for (int i = 0; i < coinEntry.getValue(); i++) {
+                if (changeAmount >= coinEntry.getKey()
+                        && getCoinsCountForCoinType(coinEntry.getKey()) > 0) {
                     changeAmount -= coinEntry.getKey();
                 } else {
                     break;
                 }
             }
-            if(changeAmount == 0)
+            if (changeAmount == 0)
                 break;
         }
-        return (changeAmount > 0) ? false : true;
+        return (changeAmount == 0);
     }
 
-    public synchronized List<Double> getCoinsChange(double changeAmount) {
+    /**
+     * Method to calculate and collect the balance change coins which will be returned to the user
+     *
+     * @return list of coins calculated with respect to the balance
+     */
+    public List<Double> getCoinsChange(double balanceChange) {
         List<Double> changeCoins = new ArrayList<>();
         for (Map.Entry<Double, Integer> coinEntry : coinsCountMap.entrySet()) {
-            for(int i = 0; i < coinEntry.getValue(); i++){
-                if(changeAmount >= coinEntry.getKey()
-                        && getCoinsCountForCoinType(coinEntry.getKey()) > 0){
+            for (int i = 0; i < coinEntry.getValue(); i++) {
+                if (balanceChange >= coinEntry.getKey()
+                        && getCoinsCountForCoinType(coinEntry.getKey()) > 0) {
                     changeCoins.add(coinEntry.getKey());
-                    //coinsCountMap.put(coinEntry.getKey(), getCoinsCountForCoinType(coinEntry.getKey())-1);
                     removeCoin(coinEntry.getKey());
-                    changeAmount -= coinEntry.getKey();
-                } else { break; }
+                    balanceChange -= coinEntry.getKey();
+                } else {
+                    break;
+                }
             }
-            if(changeAmount == 0)
+            if (balanceChange == 0)
                 break;
         }
         return changeCoins;
